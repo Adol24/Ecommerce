@@ -113,20 +113,26 @@ export default function AdminSettingsPage() {
   const handleLogoUpload = async (file: File) => {
     setLogoUploading(true)
     try {
-      const sigRes = await fetch(`/api/upload/signature?folder=store`)
-      const sigJson = await sigRes.json() as Record<string, unknown>
+      // The route is POST-only and returns { success, data: UploadSignature, uploadUrl }
+      const sigRes = await fetch("/api/upload/signature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder: "basictech/store" }),
+      })
+      const sigJson = await sigRes.json() as {
+        success: boolean
+        data: Record<string, unknown>
+        uploadUrl: string
+      }
 
       const fd = new FormData()
       fd.append("file", file)
-      fd.append("signature", sigJson.signature as string)
-      fd.append("timestamp", String(sigJson.timestamp))
-      fd.append("api_key", sigJson.apiKey as string)
-      fd.append("folder", sigJson.folder as string)
+      fd.append("signature", sigJson.data.signature as string)
+      fd.append("timestamp", String(sigJson.data.timestamp))
+      fd.append("api_key", sigJson.data.apiKey as string)
+      fd.append("folder", sigJson.data.folder as string)
 
-      const cloudRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${sigJson.cloudName as string}/image/upload`,
-        { method: "POST", body: fd }
-      )
+      const cloudRes = await fetch(sigJson.uploadUrl, { method: "POST", body: fd })
       const cloudData = await cloudRes.json() as Record<string, unknown>
       if (cloudData.secure_url) {
         updateField("logo", cloudData.secure_url as string)

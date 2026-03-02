@@ -19,7 +19,7 @@ export function PriceFilter({
   minPrice = 0,
   maxPrice = DEFAULT_PRODUCT_PRICE_MAX,
 }: PriceFilterProps) {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
 
   // Local draft values for the text inputs so the user can type freely
   const [minDraft, setMinDraft] = useState(String(priceRange[0]))
@@ -52,17 +52,17 @@ export function PriceFilter({
   const fmt = (n: number) => n.toLocaleString("es-MX")
 
   return (
-    <div className="border-b pb-4">
+    <div className="border-b">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between py-2 font-medium"
+        className="flex w-full items-center justify-between py-3 font-medium"
       >
-        Precio
-        {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <span>Precio</span>
+        {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
 
       {isOpen && (
-        <div className="mt-4 space-y-4">
+        <div className="pb-4 space-y-4">
           {/* Range display */}
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>${fmt(priceRange[0])}</span>

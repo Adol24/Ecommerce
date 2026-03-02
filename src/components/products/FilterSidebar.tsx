@@ -30,21 +30,27 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Filtros</h2>
-        {hasActiveFilters && (
+    <div className="space-y-0">
+      {hasActiveFilters && (
+        <div className="mb-3 flex items-center justify-end">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClearFilters}
             className="h-auto p-0 text-sm text-primary hover:text-primary/80"
           >
-            Limpiar
+            Limpiar todo
             <X className="ml-1 h-3 w-3" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
+
+      <CategoryFilter
+        selectedCategories={filters.categories}
+        onCategoriesChange={(categories) =>
+          onFiltersChange({ ...filters, categories })
+        }
+      />
 
       <BrandFilter
         selectedBrands={filters.brands}
@@ -57,13 +63,6 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
         priceRange={filters.priceRange}
         onPriceChange={(priceRange) =>
           onFiltersChange({ ...filters, priceRange })
-        }
-      />
-
-      <CategoryFilter
-        selectedCategories={filters.categories}
-        onCategoriesChange={(categories) =>
-          onFiltersChange({ ...filters, categories })
         }
       />
     </div>

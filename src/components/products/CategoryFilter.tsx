@@ -16,7 +16,7 @@ export function CategoryFilter({
   selectedCategories,
   onCategoriesChange,
 }: CategoryFilterProps) {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const { categories, fetchCategories } = useProductsStore()
 
   useEffect(() => {
@@ -36,38 +36,36 @@ export function CategoryFilter({
   }
 
   return (
-    <div className="border-b pb-4">
+    <div className="border-b">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between py-2 font-medium"
+        className="flex w-full items-center justify-between py-3 font-medium"
       >
-        Categoria
+        <span>Categoría</span>
         {isOpen ? (
-          <ChevronUp className="h-4 w-4" />
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
         ) : (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         )}
       </button>
 
       {isOpen && (
-        <div className="mt-2 space-y-2">
+        <div className="pb-3 space-y-1">
           {categories.map((category) => (
-            <div key={category.id} className="flex items-center space-x-2">
+            <label
+              key={category.id}
+              htmlFor={`category-${category.id}`}
+              className="flex cursor-pointer items-center gap-3 rounded-md px-1 py-2 text-sm transition-colors hover:bg-muted/50"
+            >
               <Checkbox
                 id={`category-${category.id}`}
                 checked={selectedCategories.includes(category.slug)}
                 onCheckedChange={() => handleCategoryToggle(category.slug)}
               />
-              <Label
-                htmlFor={`category-${category.id}`}
-                className="flex flex-1 cursor-pointer items-center justify-between text-sm"
-              >
-                <span>{category.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {category.productCount || 0}
-                </span>
-              </Label>
-            </div>
+              <span className={selectedCategories.includes(category.slug) ? "font-medium" : ""}>
+                {category.name}
+              </span>
+            </label>
           ))}
         </div>
       )}

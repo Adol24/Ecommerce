@@ -12,6 +12,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+  Pragma: "no-cache",
+}
+
 export async function GET() {
   try {
     const { data, error } = await insforge.database
@@ -21,19 +26,21 @@ export async function GET() {
       .single()
 
     if (error || !data) {
-      return NextResponse.json({
-        settings: normalizeStoreSettings(null),
-        updatedAt: null,
-        source: "defaults",
-      })
+      return NextResponse.json(
+        { settings: normalizeStoreSettings(null), updatedAt: null, source: "defaults" },
+        { headers: NO_CACHE_HEADERS }
+      )
     }
 
     const row = data as Record<string, unknown>
-    return NextResponse.json({
-      settings: normalizeStoreSettings(row.settings),
-      updatedAt: (row.updated_at as string | null | undefined) ?? null,
-      source: "database",
-    })
+    return NextResponse.json(
+      {
+        settings: normalizeStoreSettings(row.settings),
+        updatedAt: (row.updated_at as string | null | undefined) ?? null,
+        source: "database",
+      },
+      { headers: NO_CACHE_HEADERS }
+    )
   } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 })
   }

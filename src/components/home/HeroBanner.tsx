@@ -221,7 +221,21 @@ export function HeroBanner() {
   const plugin = React.useRef(Autoplay({ delay: 5000, stopOnInteraction: true }))
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
+  const [showControls, setShowControls] = React.useState(false)
+  const controlsTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const { settings } = useStoreSettings()
+
+  const revealControls = () => {
+    setShowControls(true)
+    if (controlsTimer.current) clearTimeout(controlsTimer.current)
+    controlsTimer.current = setTimeout(() => setShowControls(false), 3000)
+  }
+
+  React.useEffect(() => {
+    return () => {
+      if (controlsTimer.current) clearTimeout(controlsTimer.current)
+    }
+  }, [])
 
   const slides = React.useMemo(
     () => settings.homepageConfig.heroSlides.filter((s) => s.visible),
@@ -247,29 +261,42 @@ export function HeroBanner() {
         <div className="flex gap-3">
           {/* Main Carousel — 65% */}
           <div className="min-w-0 flex-[65]">
-            <Carousel
-              plugins={[plugin.current]}
-              className="w-full"
-              opts={{ loop: true }}
-              setApi={setApi}
-            >
-              <CarouselContent>
-                {slides.map((slide, index) => (
-                  <CarouselItem key={slide.id}>
-                    {slide.backgroundType === "color" ? (
-                      <ColorSlide slide={slide} />
-                    ) : slide.backgroundType === "split" ? (
-                      <SplitSlide slide={slide} index={index} />
-                    ) : (
-                      <ImageSlide slide={slide} index={index} />
-                    )}
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div onClick={revealControls}>
+              <Carousel
+                plugins={[plugin.current]}
+                className="w-full"
+                opts={{ loop: true }}
+                setApi={setApi}
+              >
+                <CarouselContent>
+                  {slides.map((slide, index) => (
+                    <CarouselItem key={slide.id}>
+                      {slide.backgroundType === "color" ? (
+                        <ColorSlide slide={slide} />
+                      ) : slide.backgroundType === "split" ? (
+                        <SplitSlide slide={slide} index={index} />
+                      ) : (
+                        <ImageSlide slide={slide} index={index} />
+                      )}
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
 
-              <CarouselPrevious className="left-3 h-8 w-8 sm:left-4" />
-              <CarouselNext className="right-3 h-8 w-8 sm:right-4" />
-            </Carousel>
+                <CarouselPrevious
+                  className={cn(
+                    "left-3 h-8 w-8 sm:left-4 transition-opacity duration-300",
+                    showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+                  )}
+                />
+                <CarouselNext
+                  className={cn(
+                    "right-3 h-8 w-8 sm:right-4 transition-opacity duration-300",
+                    showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+                  )}
+                />
+              </Carousel>
+            </div>
 
             {/* Slide dots — outside the slide, below it */}
             {slides.length > 1 && (

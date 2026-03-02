@@ -14,7 +14,7 @@ interface BrandFilterProps {
 }
 
 export function BrandFilter({ selectedBrands, onBrandsChange }: BrandFilterProps) {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const { brands, fetchBrands } = useProductsStore()
 
@@ -39,21 +39,21 @@ export function BrandFilter({ selectedBrands, onBrandsChange }: BrandFilterProps
   }
 
   return (
-    <div className="border-b pb-4">
+    <div className="border-b">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between py-2 font-medium"
+        className="flex w-full items-center justify-between py-3 font-medium"
       >
-        Marca
+        <span>Marca</span>
         {isOpen ? (
-          <ChevronUp className="h-4 w-4" />
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
         ) : (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         )}
       </button>
 
       {isOpen && (
-        <div className="mt-2 space-y-3">
+        <div className="pb-3 space-y-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -65,24 +65,22 @@ export function BrandFilter({ selectedBrands, onBrandsChange }: BrandFilterProps
             />
           </div>
 
-          <div className="max-h-48 space-y-2 overflow-y-auto">
+          <div className="max-h-52 space-y-1 overflow-y-auto">
             {filteredBrands.map((brand) => (
-              <div key={brand.id} className="flex items-center space-x-2">
+              <label
+                key={brand.id}
+                htmlFor={`brand-${brand.id}`}
+                className="flex cursor-pointer items-center gap-3 rounded-md px-1 py-2 text-sm transition-colors hover:bg-muted/50"
+              >
                 <Checkbox
                   id={`brand-${brand.id}`}
                   checked={selectedBrands.includes(brand.slug)}
                   onCheckedChange={() => handleBrandToggle(brand.slug)}
                 />
-                <Label
-                  htmlFor={`brand-${brand.id}`}
-                  className="flex flex-1 cursor-pointer items-center justify-between text-sm"
-                >
-                  <span>{brand.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {brand.productCount || 0}
-                  </span>
-                </Label>
-              </div>
+                <span className={selectedBrands.includes(brand.slug) ? "font-medium" : ""}>
+                  {brand.name}
+                </span>
+              </label>
             ))}
           </div>
         </div>

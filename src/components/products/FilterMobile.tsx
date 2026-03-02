@@ -36,11 +36,11 @@ export function FilterMobile({
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[350px]">
-        <SheetHeader>
+      <SheetContent side="left" className="flex w-[300px] flex-col sm:w-[320px] p-0">
+        <SheetHeader className="shrink-0 border-b px-4 py-4">
           <SheetTitle>Filtros</SheetTitle>
         </SheetHeader>
-        <div className="mt-6">
+        <div className="flex-1 overflow-y-auto px-4 py-4">
           <FilterSidebar filters={filters} onFiltersChange={onFiltersChange} />
         </div>
       </SheetContent>
