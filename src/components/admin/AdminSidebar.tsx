@@ -37,11 +37,20 @@ const navigation = [
   { name: "Configuracion", href: "/admin/settings",  icon: Settings        },
 ]
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen: boolean
+}
+
+export function AdminSidebar({ isOpen }: AdminSidebarProps) {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 border-r bg-card">
+    <aside
+      className={cn(
+        "hidden border-r bg-card lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col lg:transition-transform lg:duration-200",
+        isOpen ? "lg:translate-x-0" : "lg:-translate-x-full lg:pointer-events-none"
+      )}
+    >
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b px-6">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">

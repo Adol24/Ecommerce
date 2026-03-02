@@ -321,8 +321,8 @@ export default function AdminProductsPage() {
                           <Badge variant="destructive">Agotado</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
+                      <TableCell className="w-[70px]">
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
                               <MoreHorizontal className="h-4 w-4" />

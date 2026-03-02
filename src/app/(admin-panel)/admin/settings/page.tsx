@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { Save, Check, Palette, ShoppingCart, Star } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Save, Check, Palette, ShoppingCart, Star, Upload, X, ImageIcon, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -61,6 +61,8 @@ export default function AdminSettingsPage() {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadWarning, setLoadWarning] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const syncLocalCache = useCallback((nextSettings: AdminSettings) => {
     if (typeof window === "undefined") return
@@ -105,6 +107,35 @@ export default function AdminSettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }))
     if (saveState !== "idle") {
       setSaveState("idle")
+    }
+  }
+
+  const handleLogoUpload = async (file: File) => {
+    setLogoUploading(true)
+    try {
+      const sigRes = await fetch(`/api/upload/signature?folder=store`)
+      const sigJson = await sigRes.json() as Record<string, unknown>
+
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("signature", sigJson.signature as string)
+      fd.append("timestamp", String(sigJson.timestamp))
+      fd.append("api_key", sigJson.apiKey as string)
+      fd.append("folder", sigJson.folder as string)
+
+      const cloudRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${sigJson.cloudName as string}/image/upload`,
+        { method: "POST", body: fd }
+      )
+      const cloudData = await cloudRes.json() as Record<string, unknown>
+      if (cloudData.secure_url) {
+        updateField("logo", cloudData.secure_url as string)
+      }
+    } catch (err) {
+      console.error("Logo upload failed:", err)
+    } finally {
+      setLogoUploading(false)
+      if (logoInputRef.current) logoInputRef.current.value = ""
     }
   }
 
@@ -244,6 +275,78 @@ export default function AdminSettingsPage() {
                   value={settings.storeDescription}
                   onChange={(e) => updateField("storeDescription", e.target.value)}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Logo de la Tienda</CardTitle>
+              <CardDescription>
+                Sube el logo que aparecerá en el encabezado y pie de página de tu tienda
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start gap-6">
+                {/* Preview */}
+                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted">
+                  {settings.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={settings.logo}
+                      alt="Logo"
+                      className="h-full w-full rounded-xl object-contain p-1"
+                    />
+                  ) : (
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+
+                {/* Controls */}
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Formatos: JPG, PNG, SVG, WEBP. Recomendado: imagen cuadrada, mínimo 128×128px.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) void handleLogoUpload(file)
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={logoUploading}
+                      onClick={() => logoInputRef.current?.click()}
+                    >
+                      {logoUploading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Subiendo...</>
+                      ) : (
+                        <><Upload className="mr-2 h-4 w-4" />Subir logo</>
+                      )}
+                    </Button>
+                    {settings.logo && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateField("logo", "")}
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Eliminar logo
+                      </Button>
+                    )}
+                  </div>
+                  {settings.logo && (
+                    <p className="max-w-xs truncate text-xs text-muted-foreground">{settings.logo}</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

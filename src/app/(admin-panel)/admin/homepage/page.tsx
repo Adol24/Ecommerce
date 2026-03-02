@@ -1254,14 +1254,18 @@ function PromoBannerCard({
             <Input value={banner.ctaText} onChange={(e) => set("ctaText", e.target.value)} placeholder="Ver ofertas" className="h-8 text-xs" />
           </div>
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Enlace</Label>
-          <Input value={banner.href} onChange={(e) => set("href", e.target.value)} placeholder="/products" className="h-8 text-xs" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">URL de imagen</Label>
-          <Input value={banner.image} onChange={(e) => set("image", e.target.value)} placeholder="https://..." className="h-8 text-xs" />
-        </div>
+        <LinkPickerField
+          label="Destino del banner"
+          value={banner.href}
+          onChange={(v) => set("href", v)}
+        />
+        <ImageUrlField
+          label="Imagen del banner"
+          value={banner.image}
+          onChange={(v) => set("image", v)}
+          placeholder="https://..."
+          folder="banners/promo"
+        />
 
         {/* Overlay color */}
         <div className="space-y-1.5">
@@ -1279,6 +1283,13 @@ function PromoBannerCard({
                 style={{ backgroundColor: preset.hex }}
               />
             ))}
+            <input
+              type="color"
+              value={banner.overlayHex || "#000000"}
+              onChange={(e) => set("overlayHex", e.target.value)}
+              className="h-7 w-7 cursor-pointer rounded-full border-2 border-border"
+              title="Color personalizado"
+            />
           </div>
         </div>
 

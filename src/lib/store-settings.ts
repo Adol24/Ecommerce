@@ -14,6 +14,7 @@ export const APP_SETTINGS_ROW_ID = "default"
 export interface StoreSettings {
   activeTemplate: TemplateId
   storeName: string
+  logo: string
   storeEmail: string
   storePhone: string
   storeAddress: string
@@ -40,6 +41,7 @@ export interface StoreSettings {
 export const defaultStoreSettings: StoreSettings = {
   activeTemplate: "tech",
   storeName: "BasicTechShop",
+  logo: "",
   storeEmail: "info@basictechshop.com",
   storePhone: "+52 55 1234 5678",
   storeAddress: "Av. Tecnologia 123, Ciudad de Mexico",
@@ -95,6 +97,7 @@ export function normalizeStoreSettings(value: unknown): StoreSettings {
   return {
     activeTemplate,
     storeName: readString(value, "storeName", defaultStoreSettings.storeName),
+    logo: readString(value, "logo", defaultStoreSettings.logo),
     storeEmail: readString(value, "storeEmail", defaultStoreSettings.storeEmail),
     storePhone: readString(value, "storePhone", defaultStoreSettings.storePhone),
     storeAddress: readString(value, "storeAddress", defaultStoreSettings.storeAddress),

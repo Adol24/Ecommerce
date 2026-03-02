@@ -76,9 +76,18 @@ export function Header() {
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-black text-primary-foreground">BT</span>
-            </div>
+            {settings.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={settings.logo}
+                alt={settings.storeName}
+                className="h-9 w-9 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+                <span className="text-sm font-black text-primary-foreground">BT</span>
+              </div>
+            )}
             <div className="hidden sm:block">
               <span className="text-xl font-black tracking-tight">{settings.storeName}</span>
             </div>

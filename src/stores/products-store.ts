@@ -69,6 +69,49 @@ function transformBrandFromDB(item: Record<string, unknown>): Brand {
   }
 }
 
+// ─── Helpers to resolve slugs → IDs ──────────────────────────────────────────
+async function resolveCategoryIds(
+  slugs: string[],
+  cached: Category[]
+): Promise<string[]> {
+  if (slugs.length === 0) return []
+
+  // Use cached data if available and covers all slugs
+  const fromCache = slugs
+    .map((s) => cached.find((c) => c.slug === s)?.id)
+    .filter(Boolean) as string[]
+
+  if (fromCache.length === slugs.length) return fromCache
+
+  // Fallback: fetch from DB
+  const { data } = await insforge.database
+    .from("categories")
+    .select("id, slug")
+    .in("slug", slugs)
+
+  return (data ?? []).map((r: Record<string, unknown>) => r.id as string)
+}
+
+async function resolveBrandIds(
+  slugs: string[],
+  cached: Brand[]
+): Promise<string[]> {
+  if (slugs.length === 0) return []
+
+  const fromCache = slugs
+    .map((s) => cached.find((b) => b.slug === s)?.id)
+    .filter(Boolean) as string[]
+
+  if (fromCache.length === slugs.length) return fromCache
+
+  const { data } = await insforge.database
+    .from("brands")
+    .select("id, slug")
+    .in("slug", slugs)
+
+  return (data ?? []).map((r: Record<string, unknown>) => r.id as string)
+}
+
 export const useProductsStore = create<ProductsState>((set, get) => ({
   products: [],
   categories: [],
@@ -82,29 +125,39 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
     set({ loading: true, error: null })
     try {
       const filters = { ...get().filters, ...filterOverrides }
-      
+
+      // ── Resolve category IDs from slugs (handles race condition) ──────────
+      const [categoryIds, brandIds] = await Promise.all([
+        resolveCategoryIds(filters.categories, get().categories),
+        resolveBrandIds(filters.brands, get().brands),
+      ])
+
+      // ── Build query ───────────────────────────────────────────────────────
       let query = insforge.database
         .from("products")
         .select("*, category:categories(*), brand:brands(*)")
+        .eq("is_active", true)
 
+      // Search
       if (filters.searchQuery?.trim()) {
         query = query.ilike("name", `%${filters.searchQuery.trim()}%`)
       }
 
-      if (filters.categories.length === 1) {
-        const category = get().categories.find(c => c.slug === filters.categories[0])
-        if (category) {
-          query = query.eq("category_id", category.id)
-        }
+      // Category filter — supports multi-select
+      if (categoryIds.length === 1) {
+        query = query.eq("category_id", categoryIds[0])
+      } else if (categoryIds.length > 1) {
+        query = query.in("category_id", categoryIds)
       }
 
-      if (filters.brands.length === 1) {
-        const brand = get().brands.find(b => b.slug === filters.brands[0])
-        if (brand) {
-          query = query.eq("brand_id", brand.id)
-        }
+      // Brand filter — supports multi-select
+      if (brandIds.length === 1) {
+        query = query.eq("brand_id", brandIds[0])
+      } else if (brandIds.length > 1) {
+        query = query.in("brand_id", brandIds)
       }
 
+      // Price range — only apply when non-default
       if (filters.priceRange[0] > 0) {
         query = query.gte("price", filters.priceRange[0])
       }
@@ -112,6 +165,7 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
         query = query.lte("price", filters.priceRange[1])
       }
 
+      // Sorting
       switch (filters.sortBy) {
         case "price-asc":
           query = query.order("price", { ascending: true })
@@ -119,12 +173,13 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
         case "price-desc":
           query = query.order("price", { ascending: false })
           break
-        case "newest":
-          query = query.order("created_at", { ascending: false })
+        case "rating":
+          query = query.order("rating", { ascending: false })
           break
         case "popular":
-          query = query.order("stock", { ascending: false })
+          query = query.order("rating", { ascending: false })
           break
+        case "newest":
         default:
           query = query.order("created_at", { ascending: false })
       }
@@ -133,9 +188,7 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
 
       if (error) throw new Error(error.message)
 
-      const products = (data || [])
-        .map(transformProductFromDB)
-        .filter((product) => product.isActive !== false)
+      const products = (data || []).map(transformProductFromDB)
       set({ products, loading: false })
     } catch (error) {
       set({ error: (error as Error).message, loading: false })
@@ -148,28 +201,24 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
         .from("products")
         .select("*, category:categories(*), brand:brands(*)")
         .eq("is_featured", true)
+        .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(8)
 
       if (error) throw new Error(error.message)
 
-      let featuredProducts = (data || [])
-        .map(transformProductFromDB)
-        .filter((product) => product.isActive !== false)
+      let featuredProducts = (data || []).map(transformProductFromDB)
 
-      // Fallback: if no featured products exist yet, show latest active products.
       if (featuredProducts.length === 0) {
         const fallback = await insforge.database
           .from("products")
           .select("*, category:categories(*), brand:brands(*)")
+          .eq("is_active", true)
           .order("created_at", { ascending: false })
           .limit(8)
 
         if (fallback.error) throw new Error(fallback.error.message)
-
-        featuredProducts = (fallback.data || [])
-          .map(transformProductFromDB)
-          .filter((product) => product.isActive !== false)
+        featuredProducts = (fallback.data || []).map(transformProductFromDB)
       }
 
       set({ featuredProducts })

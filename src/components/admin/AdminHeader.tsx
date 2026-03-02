@@ -13,18 +13,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { AdminMobileNav } from "./AdminMobileNav"
 import { useStoreSettings } from "@/components/providers/StoreSettingsProvider"
 
-export function AdminHeader() {
+interface AdminHeaderProps {
+  isSidebarOpen: boolean
+  onToggleSidebar: () => void
+}
+
+export function AdminHeader({ isSidebarOpen, onToggleSidebar }: AdminHeaderProps) {
   const { settings } = useStoreSettings()
 
   const storeName = settings?.storeName ?? "Mi Tienda"
@@ -34,6 +32,21 @@ export function AdminHeader() {
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
       {/* Mobile Menu */}
       <AdminMobileNav />
+
+      {/* Desktop Sidebar Toggle */}
+      <div className="hidden lg:block">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar}
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">
+            {isSidebarOpen ? "Ocultar menu lateral" : "Mostrar menu lateral"}
+          </span>
+        </Button>
+      </div>
 
       {/* Store name — solo desktop */}
       <div className="hidden items-center gap-2 lg:flex">

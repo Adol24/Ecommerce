@@ -30,11 +30,11 @@ export function BrandFilter({ selectedBrands, onBrandsChange }: BrandFilterProps
     brand.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleBrandToggle = (brandName: string) => {
-    if (selectedBrands.includes(brandName)) {
-      onBrandsChange(selectedBrands.filter((b) => b !== brandName))
+  const handleBrandToggle = (brandSlug: string) => {
+    if (selectedBrands.includes(brandSlug)) {
+      onBrandsChange(selectedBrands.filter((b) => b !== brandSlug))
     } else {
-      onBrandsChange([...selectedBrands, brandName])
+      onBrandsChange([...selectedBrands, brandSlug])
     }
   }
 
@@ -70,8 +70,8 @@ export function BrandFilter({ selectedBrands, onBrandsChange }: BrandFilterProps
               <div key={brand.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`brand-${brand.id}`}
-                  checked={selectedBrands.includes(brand.name)}
-                  onCheckedChange={() => handleBrandToggle(brand.name)}
+                  checked={selectedBrands.includes(brand.slug)}
+                  onCheckedChange={() => handleBrandToggle(brand.slug)}
                 />
                 <Label
                   htmlFor={`brand-${brand.id}`}

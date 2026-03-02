@@ -292,13 +292,57 @@ export async function verifyEmail(
 export async function resendVerificationCode(email: string): Promise<{ error?: string }> {
   try {
     const { error } = await insforge.auth.resendVerificationEmail({ email })
-    
+
     if (error) {
       return { error: error.message || 'Error al reenviar código' }
     }
-    
+
     return {}
   } catch (err) {
+    return { error: 'Error de conexión' }
+  }
+}
+
+// ─── Password Reset ───────────────────────────────────────────────────────────
+
+/** Step 1: sends a 6-digit code to the user's email */
+export async function sendResetPasswordEmail(
+  email: string
+): Promise<{ error?: string }> {
+  try {
+    const { error } = await insforge.auth.sendResetPasswordEmail({ email })
+    if (error) return { error: error.message || 'Error al enviar el correo' }
+    return {}
+  } catch {
+    return { error: 'Error de conexión' }
+  }
+}
+
+/** Step 2: exchanges the 6-digit code for a short-lived reset token */
+export async function exchangeResetPasswordToken(
+  email: string,
+  code: string
+): Promise<{ token?: string; error?: string }> {
+  try {
+    const { data, error } = await insforge.auth.exchangeResetPasswordToken({ email, code })
+    if (error) return { error: error.message || 'Código inválido o expirado' }
+    if (!data?.token) return { error: 'No se recibió el token de restablecimiento' }
+    return { token: data.token }
+  } catch {
+    return { error: 'Error de conexión' }
+  }
+}
+
+/** Step 3: sets the new password using the reset token */
+export async function resetPassword(
+  newPassword: string,
+  token: string
+): Promise<{ error?: string }> {
+  try {
+    const { error } = await insforge.auth.resetPassword({ newPassword, otp: token })
+    if (error) return { error: error.message || 'Error al restablecer la contraseña' }
+    return {}
+  } catch {
     return { error: 'Error de conexión' }
   }
 }

@@ -44,9 +44,18 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">BT</span>
-              </div>
+              {settings.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={settings.logo}
+                  alt={settings.storeName}
+                  className="h-8 w-8 rounded-lg object-contain"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                  <span className="text-sm font-bold text-primary-foreground">BT</span>
+                </div>
+              )}
               <span className="text-xl font-bold">{settings.storeName}</span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">
