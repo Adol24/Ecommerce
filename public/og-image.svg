@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#2563eb"/>
+  <rect x="50" y="50" width="1100" height="530" rx="20" fill="white"/>
+  <g transform="translate(100, 150)">
+    <rect x="0" y="0" width="300" height="80" rx="8" fill="#eff6ff"/>
+    <rect x="0" y="100" width="200" height="40" rx="4" fill="#e2e8f0"/>
+    <rect x="0" y="160" width="160" height="40" rx="4" fill="#e2e8f0" opacity="0.6"/>
+  </g>
+  <circle cx="900" cy="315" r="150" fill="#fbbf24"/>
+  <path d="M850 315l30 30 60-60" stroke="white" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="600" y="560" text-anchor="middle" font-family="system-ui" font-size="48" font-weight="bold" fill="#1e293b">BasicTechShop</text>
+</svg>
