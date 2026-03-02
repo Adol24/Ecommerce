@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Bell, Check, CheckCheck, Trash2, Package, AlertTriangle, DollarSign, Loader2 } from "lucide-react"
+import { useEffect, useState, useCallback } from "react"
+import { Bell, Check, CheckCheck, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -15,6 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { insforge } from "@/lib/insforge"
+import { publishAppDataChangedClient } from "@/lib/realtime-publish-client"
+import { useAppRealtimeRefresh } from "@/hooks/useAppRealtimeRefresh"
 
 interface Notification {
   id: string
@@ -26,19 +28,34 @@ interface Notification {
   created_at: string
 }
 
-const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className: string }> = {
-  new_order: { label: "Nuevo Pedido", variant: "default", className: "bg-blue-500" },
-  stock_low: { label: "Stock Bajo", variant: "secondary", className: "bg-yellow-500" },
-  payment_received: { label: "Pago Recibido", variant: "default", className: "bg-green-500" },
-  order_cancelled: { label: "Pedido Cancelado", variant: "destructive", className: "" },
+const typeConfig: Record<string, { label: string; className: string }> = {
+  new_order:        { label: "Nuevo Pedido",      className: "bg-blue-500 text-white" },
+  stock_low:        { label: "Stock Bajo",         className: "bg-yellow-500 text-white" },
+  payment_received: { label: "Pago Recibido",      className: "bg-green-500 text-white" },
+  order_cancelled:  { label: "Pedido Cancelado",   className: "bg-destructive text-white" },
+}
+
+function formatDate(date: string) {
+  const d = new Date(date)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return "Ahora mismo"
+  if (minutes < 60) return `Hace ${minutes}min`
+  if (hours < 24) return `Hace ${hours}h`
+  if (days < 7) return `Hace ${days}d`
+  return d.toLocaleDateString("es-MX")
 }
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [markingAllRead, setMarkingAllRead] = useState(false)
 
-  const fetchNotifications = async () => {
-    setLoading(true)
+  const fetchNotifications = useCallback(async () => {
     try {
       const { data, error } = await insforge.database
         .from("notifications")
@@ -53,11 +70,14 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchNotifications()
-  }, [])
+  }, [fetchNotifications])
+
+  // Auto-refresh when realtime events arrive for "notifications" entity
+  useAppRealtimeRefresh(["notifications"], fetchNotifications)
 
   const markAsRead = async (id: string) => {
     try {
@@ -65,59 +85,46 @@ export default function NotificationsPage() {
         .from("notifications")
         .update({ is_read: true })
         .eq("id", id)
-      
-      setNotifications(notifications.map(n => 
-        n.id === id ? { ...n, is_read: true } : n
-      ))
+
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)))
+
+      // Publish so the bell count updates in real time
+      await publishAppDataChangedClient({ entity: "notifications", action: "updated", id })
     } catch (error) {
       console.error("Error marking as read:", error)
     }
   }
 
   const markAllAsRead = async () => {
+    setMarkingAllRead(true)
     try {
       await insforge.database
         .from("notifications")
         .update({ is_read: true })
         .eq("is_read", false)
-      
-      setNotifications(notifications.map(n => ({ ...n, is_read: true })))
+
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+
+      await publishAppDataChangedClient({ entity: "notifications", action: "updated" })
     } catch (error) {
       console.error("Error marking all as read:", error)
+    } finally {
+      setMarkingAllRead(false)
     }
   }
 
   const deleteNotification = async (id: string) => {
     try {
-      await insforge.database
-        .from("notifications")
-        .delete()
-        .eq("id", id)
-      
-      setNotifications(notifications.filter(n => n.id !== id))
+      await insforge.database.from("notifications").delete().eq("id", id)
+      setNotifications((prev) => prev.filter((n) => n.id !== id))
+      await publishAppDataChangedClient({ entity: "notifications", action: "deleted", id })
     } catch (error) {
       console.error("Error deleting notification:", error)
     }
   }
 
-  const unreadCount = notifications.filter(n => !n.is_read).length
-  const newOrders = notifications.filter(n => n.type === "new_order").length
-  const stockAlerts = notifications.filter(n => n.type === "stock_low").length
-
-  const formatDate = (date: string) => {
-    const d = new Date(date)
-    const now = new Date()
-    const diff = now.getTime() - d.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-
-    if (minutes < 1) return "Ahora mismo"
-    if (minutes < 60) return `Hace ${minutes}min`
-    if (hours < 24) return `Hace ${hours}h`
-    if (days < 7) return `Hace ${days}d`
-    return d.toLocaleDateString("es-MX")
-  }
+  const unreadCount = notifications.filter((n) => !n.is_read).length
+  const newOrders = notifications.filter((n) => n.type === "new_order").length
 
   return (
     <div className="space-y-6">
@@ -130,8 +137,12 @@ export default function NotificationsPage() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead}>
-            <CheckCheck className="mr-2 h-4 w-4" />
+          <Button variant="outline" onClick={markAllAsRead} disabled={markingAllRead}>
+            {markingAllRead ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCheck className="mr-2 h-4 w-4" />
+            )}
             Marcar todo como leído
           </Button>
         )}
@@ -142,7 +153,7 @@ export default function NotificationsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Notificaciones
+              Total
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -171,7 +182,7 @@ export default function NotificationsPage() {
         </Card>
       </div>
 
-      {/* Notifications List */}
+      {/* List */}
       {loading ? (
         <Card>
           <CardContent className="p-0">
@@ -182,7 +193,7 @@ export default function NotificationsPage() {
                   <TableHead>Título</TableHead>
                   <TableHead>Mensaje</TableHead>
                   <TableHead>Fecha</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
+                  <TableHead className="w-[100px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -192,7 +203,7 @@ export default function NotificationsPage() {
                     <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-60" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-16" /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -202,10 +213,10 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Bell className="h-12 w-12 text-muted-foreground mb-4" />
+            <Bell className="mb-4 h-12 w-12 text-muted-foreground" />
             <h3 className="font-semibold">No hay notificaciones</h3>
             <p className="text-sm text-muted-foreground">
-              Las notificaciones aparecerán aquí
+              Las notificaciones aparecerán aquí en tiempo real
             </p>
           </CardContent>
         </Card>
@@ -219,29 +230,32 @@ export default function NotificationsPage() {
                   <TableHead>Título</TableHead>
                   <TableHead>Mensaje</TableHead>
                   <TableHead>Fecha</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
+                  <TableHead className="w-[100px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {notifications.map((notification) => {
-                  const config = typeConfig[notification.type] || typeConfig["new_order"]
+                  const config = typeConfig[notification.type] ?? typeConfig["new_order"]
                   return (
-                    <TableRow key={notification.id} className={!notification.is_read ? "bg-blue-50/50" : ""}>
+                    <TableRow
+                      key={notification.id}
+                      className={!notification.is_read ? "bg-blue-50/50 dark:bg-blue-950/20" : ""}
+                    >
                       <TableCell>
-                        <Badge variant={config.variant} className={config.className}>
-                          {config.label}
-                        </Badge>
+                        <Badge className={config.className}>{config.label}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {!notification.is_read && <div className="h-2 w-2 rounded-full bg-blue-500" />}
+                          {!notification.is_read && (
+                            <div className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                          )}
                           <span className="font-medium">{notification.title}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {notification.message || "-"}
+                        {notification.message || "—"}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell className="text-sm text-muted-foreground">
                         {formatDate(notification.created_at)}
                       </TableCell>
                       <TableCell>
@@ -251,6 +265,7 @@ export default function NotificationsPage() {
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8"
+                              title="Marcar como leído"
                               onClick={() => markAsRead(notification.id)}
                             >
                               <Check className="h-4 w-4" />
@@ -259,7 +274,8 @@ export default function NotificationsPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-red-500"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            title="Eliminar"
                             onClick={() => deleteNotification(notification.id)}
                           >
                             <Trash2 className="h-4 w-4" />

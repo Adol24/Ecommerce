@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2, Mail, KeyRound, Lock, Eye, EyeOff, ArrowLeft, CheckCircle2, Cpu } from "lucide-react"
+import { Loader2, Mail, KeyRound, Lock, Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { AuthStoreLogo } from "@/components/auth/AuthStoreLogo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -110,12 +111,7 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 self-center font-medium">
-          <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-            <Cpu className="size-4" />
-          </div>
-          BasicTech
-        </Link>
+        <AuthStoreLogo />
 
         {/* ── Step 1: Email ─────────────────────────────────────────────── */}
         {step === "email" && (
@@ -159,7 +155,7 @@ export default function ForgotPasswordPage() {
                 </div>
               </CardContent>
 
-              <CardFooter className="flex flex-col gap-4">
+              <CardFooter className="flex flex-col gap-4 pt-2">
                 <Button
                   type="submit"
                   className="w-full"
@@ -226,7 +222,7 @@ export default function ForgotPasswordPage() {
                 </div>
               </CardContent>
 
-              <CardFooter className="flex flex-col gap-4">
+              <CardFooter className="flex flex-col gap-4 pt-2">
                 <Button
                   type="submit"
                   className="w-full"
@@ -340,7 +336,7 @@ export default function ForgotPasswordPage() {
                 </div>
               </CardContent>
 
-              <CardFooter>
+              <CardFooter className="pt-2">
                 <Button
                   type="submit"
                   className="w-full"

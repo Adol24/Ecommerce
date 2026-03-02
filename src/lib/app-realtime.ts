@@ -6,10 +6,10 @@ export type AppRealtimeEntity =
   | "products"
   | "categories"
   | "brands"
-  | "banners"
   | "users"
   | "orders"
   | "settings"
+  | "notifications"
 
 export type AppRealtimeAction = "created" | "updated" | "deleted"
 
@@ -26,7 +26,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isEntity(value: unknown): value is AppRealtimeEntity {
-  return ["products", "categories", "brands", "banners", "users", "orders", "settings"].includes(
+  return ["products", "categories", "brands", "users", "orders", "settings", "notifications"].includes(
     String(value)
   )
 }

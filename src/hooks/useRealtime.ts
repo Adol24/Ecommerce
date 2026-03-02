@@ -107,12 +107,12 @@ export function useRealtime() {
               products: "products",
               categories: "categories",
               brands: "brands",
-              banners: "banners",
               users: "users",
               user_profiles: "users",
               orders: "orders",
               order_items: "orders",
               app_settings: "settings",
+              notifications: "notifications",
             }
             const entity = entityMap[data.table] || data.table as AppRealtimeEntity
             notifyRealtimeSubscribers({
@@ -132,12 +132,12 @@ export function useRealtime() {
               products: "products",
               categories: "categories",
               brands: "brands",
-              banners: "banners",
               users: "users",
               user_profiles: "users",
               orders: "orders",
               order_items: "orders",
               app_settings: "settings",
+              notifications: "notifications",
             }
             const entity = entityMap[data.table] || data.table as AppRealtimeEntity
             notifyRealtimeSubscribers({
@@ -157,12 +157,12 @@ export function useRealtime() {
               products: "products",
               categories: "categories",
               brands: "brands",
-              banners: "banners",
               users: "users",
               user_profiles: "users",
               orders: "orders",
               order_items: "orders",
               app_settings: "settings",
+              notifications: "notifications",
             }
             const entity = entityMap[data.table] || data.table as AppRealtimeEntity
             notifyRealtimeSubscribers({

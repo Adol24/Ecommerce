@@ -1,7 +1,6 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import type { AuthUser } from '@/lib/insforge-auth'
 import { signIn as authSignIn, signOut as authSignOut, getSession } from '@/lib/insforge-auth'
 
@@ -19,7 +18,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
 
   const refreshSession = useCallback(async () => {
     setIsLoading(true)
@@ -55,11 +53,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    await authSignOut()
-    await fetch("/api/auth/me", { method: "DELETE" })
+    try {
+      await authSignOut()
+    } catch {
+      // ignore SDK errors, continue clearing session
+    }
+    try {
+      await fetch("/api/auth/me", { method: "DELETE" })
+    } catch {
+      // ignore network errors, continue clearing session
+    }
     setUser(null)
-    router.push('/')
-    router.refresh()
+    // Hard navigation ensures service workers and all caches are bypassed.
+    // router.push + router.refresh is unreliable on mobile/PWA.
+    window.location.href = "/"
   }
 
   return (

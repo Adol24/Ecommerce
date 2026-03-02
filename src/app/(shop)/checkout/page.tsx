@@ -18,6 +18,7 @@ import { useCartStore } from "@/stores/cart-store"
 import { useUserStore } from "@/stores/user-store"
 import { useToast } from "@/stores/toast-store"
 import { insforge } from "@/lib/insforge"
+import { publishAppDataChangedClient } from "@/lib/realtime-publish-client"
 
 const steps = [
   { id: 1, name: "Contacto" },
@@ -256,6 +257,30 @@ export default function CheckoutPage() {
         .insert(orderItems)
 
       if (itemsError) throw itemsError
+
+      // Create admin notification and publish realtime event
+      const customerName = isGuestMode ? guestData.name : user?.name || "Cliente"
+      try {
+        const { data: notifData } = await insforge.database
+          .from("notifications")
+          .insert([{
+            type: "new_order",
+            title: `Nuevo Pedido ${orderNum}`,
+            message: `${customerName} — $${total.toFixed(2)}`,
+            data: { orderId: orderData.id, orderNumber: orderNum },
+            is_read: false,
+          }])
+          .select("id")
+          .single()
+
+        await publishAppDataChangedClient({
+          entity: "notifications",
+          action: "created",
+          id: notifData?.id,
+        })
+      } catch {
+        // Non-critical: don't block order completion if notification fails
+      }
 
       setOrderNumber(orderNum)
       setOrderComplete(true)

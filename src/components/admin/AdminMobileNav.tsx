@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation"
 import {
   Menu,
   LayoutDashboard,
-  Images,
   Package,
   Tag,
   CreditCard,
   Users,
   Settings,
   Store,
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -23,11 +23,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useAuth } from "@/hooks/useAuth"
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Banners", href: "/admin/banners", icon: Images },
-  { name: "Productos", href: "/admin/products", icon: Package },
+{ name: "Productos", href: "/admin/products", icon: Package },
   { name: "CategorÃ­as", href: "/admin/categories", icon: Tag },
   { name: "Pagos", href: "/admin/payments", icon: CreditCard },
   { name: "Usuarios", href: "/admin/users", icon: Users },
@@ -37,6 +37,7 @@ const navigation = [
 export function AdminMobileNav() {
   const pathname = usePathname()
   const [open, setOpen] = React.useState(false)
+  const { signOut } = useAuth()
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -78,12 +79,20 @@ export function AdminMobileNav() {
             )
           })}
         </nav>
-        <div className="border-t p-4">
+        <div className="border-t p-4 space-y-2">
           <Button asChild variant="outline" className="w-full justify-start" onClick={() => setOpen(false)}>
             <Link href="/">
               <Store className="mr-2 h-4 w-4" />
               Volver a la Tienda
             </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => { setOpen(false); void signOut() }}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Cerrar Sesión
           </Button>
         </div>
       </SheetContent>

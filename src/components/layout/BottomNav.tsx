@@ -9,14 +9,6 @@ import { useFavoritesStore } from "@/stores/favorites-store"
 import { useAuth } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils"
 
-const navItems = [
-  { href: "/", label: "Inicio", icon: Home },
-  { href: "/products", label: "Buscar", icon: Search },
-  { href: "/cart", label: "Carrito", icon: ShoppingCart },
-  { href: "/profile/favorites", label: "Favoritos", icon: Heart },
-  { href: "/profile", label: "Cuenta", icon: User },
-]
-
 export function BottomNav() {
   const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(true)
@@ -24,6 +16,14 @@ export function BottomNav() {
   const { getItemCount } = useCartStore()
   const { items: favorites } = useFavoritesStore()
   const { isAuthenticated } = useAuth()
+
+  const navItems = [
+    { href: "/",                                          label: "Inicio",    icon: Home },
+    { href: "/products",                                  label: "Buscar",    icon: Search },
+    { href: "/cart",                                      label: "Carrito",   icon: ShoppingCart },
+    { href: isAuthenticated ? "/profile/favorites" : "/login?callbackUrl=/profile/favorites", label: "Favoritos", icon: Heart },
+    { href: isAuthenticated ? "/profile" : "/login?callbackUrl=/profile",                     label: "Cuenta",    icon: User },
+  ]
 
   const itemCount = getItemCount()
   const favoritesCount = favorites.length
